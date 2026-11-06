@@ -1,0 +1,19 @@
+name: Testes Python - Cadastro de Produtos
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validar sintaxe dos scripts
+        run: python -m compileall -q cadastro.py interface.py tests/
+      - name: Executar testes SQLite
+        run: python -m unittest discover -s tests -v

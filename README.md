@@ -20,6 +20,9 @@ python interface.py
 - Consultas SQL são parametrizadas para segurança.
 - Exclusão exige confirmação.
 - CSV separado por `;`, codificado como UTF-8 com BOM, abre no Excel em português.
+- A busca encontra produtos pelo **nome, categoria, fornecedor ou responsável**.
+- A exportação CSV protege campos de texto iniciados com sinais de fórmulas do Excel (`=`, `+`, `-`, `@`).
+- A formatação dos valores monetários usa somente aritmética inteira, evitando arredondamentos de ponto flutuante.
 
 ## Testes
 

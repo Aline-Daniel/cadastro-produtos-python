@@ -36,6 +36,34 @@ class TestCadastro(unittest.TestCase):
         with self.assertRaises(ValueError): self.db.adicionar('', '1,00','Acme','Testes','Aline')
         with self.assertRaises(ValueError): self.db.apagar(9999)
 
+    def test_preco_grande_sem_arredondamento_float(self):
+        self.assertEqual(formatar_preco(10000000000000001), '100000000000000,01')
+        self.assertEqual(formatar_preco(1), '0,01')
+        self.assertEqual(formatar_preco(-1), '-0,01')
+
+    def test_pesquisa_por_fornecedor_e_responsavel(self):
+        self.db.adicionar('Teclado', '12,90', 'Fornecedor Exemplo', 'Acessórios', 'Responsavel Teste')
+        self.db.adicionar('Mouse', '9,90', 'Outro Fornecedor', 'Informática', 'Outra Pessoa')
+        self.assertEqual([x['nome'] for x in self.db.listar('exemplo')], ['Teclado'])
+        self.assertEqual([x['nome'] for x in self.db.listar('responsavel')], ['Teclado'])
+        self.assertEqual([x['nome'] for x in self.db.listar('Mouse')], ['Mouse'])
+        self.assertEqual(self.db.listar('nome inexistente'), [])
+
+    def test_csv_exportacao_protege_contra_formulas_excel(self):
+        import csv
+        self.db.adicionar('=2+2', '10,00', '+EXEMPLO', '@Categoria', '-Responsavel')
+        destino = Path(self.tmp.name) / 'seguro.csv'
+        self.db.exportar_csv(destino)
+        with destino.open('r', encoding='utf-8-sig', newline='') as arquivo:
+            registros = list(csv.DictReader(arquivo, delimiter=';'))
+        self.assertEqual(len(registros), 1)
+        item = registros[0]
+        self.assertEqual(item['Nome'], "'=2+2")
+        self.assertEqual(item['Fornecedor'], "'+EXEMPLO")
+        self.assertEqual(item['Categoria'], "'@Categoria")
+        self.assertEqual(item['Responsável'], "'-Responsavel")
+        self.assertEqual(item['Valor (R$)'], '10,00')
+
     def test_exportacao_excel_csv(self):
         self.db.adicionar('Produto','34,50','Fornecedor','Categoria','Responsável')
         dest = Path(self.tmp.name) / 'saida.csv'

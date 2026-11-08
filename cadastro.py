@@ -27,7 +27,10 @@ def preco_para_centavos(texto: str) -> int:
 
 
 def formatar_preco(centavos: int) -> str:
-    return f"{centavos / 100:.2f}".replace(".", ",")
+    """Formata centavos sem conversão para float (sem perda de precisão)."""
+    sinal = "-" if centavos < 0 else ""
+    reais, cent = divmod(abs(centavos), 100)
+    return f"{sinal}{reais},{cent:02d}"
 
 
 class Cadastro:
@@ -85,9 +88,19 @@ class Cadastro:
         term = '%' + filtro.strip().lower().replace('%', r'\%').replace('_', r'\_') + '%'
         with self.conectar() as con:
             items = con.execute("""SELECT id,nome,valor_centavos,fornecedor,categoria,responsavel,criado_em
-                FROM produtos WHERE LOWER(nome) LIKE ? ESCAPE '\\' OR LOWER(categoria) LIKE ? ESCAPE '\\'
-                ORDER BY id DESC""", (term, term)).fetchall()
+                FROM produtos WHERE LOWER(nome) LIKE ? ESCAPE '\\'
+                  OR LOWER(categoria) LIKE ? ESCAPE '\\'
+                  OR LOWER(fornecedor) LIKE ? ESCAPE '\\'
+                  OR LOWER(responsavel) LIKE ? ESCAPE '\\'
+                ORDER BY id DESC""", (term, term, term, term)).fetchall()
         return [dict(r) for r in items]
+
+    @staticmethod
+    def _celula_segura_excel(valor):
+        """Impede que campos de texto do usuário sejam interpretados como fórmulas no Excel."""
+        if isinstance(valor, str) and valor.lstrip().startswith(("=", "+", "-", "@")):
+            return "'" + valor
+        return valor
 
     def exportar_csv(self, destino: Path) -> int:
         dados = self.listar()
@@ -97,6 +110,8 @@ class Cadastro:
             w = csv.writer(f, delimiter=';')
             w.writerow(("ID", "Nome", "Valor (R$)", "Fornecedor", "Categoria", "Responsável", "Data de cadastro"))
             for d in dados:
-                w.writerow((d["id"], d["nome"], formatar_preco(d["valor_centavos"]),
-                            d["fornecedor"], d["categoria"], d["responsavel"], d["criado_em"]))
+                w.writerow(tuple(self._celula_segura_excel(valor) for valor in (
+                    d["id"], d["nome"], formatar_preco(d["valor_centavos"]),
+                    d["fornecedor"], d["categoria"], d["responsavel"], d["criado_em"]
+                )))
         return len(dados)

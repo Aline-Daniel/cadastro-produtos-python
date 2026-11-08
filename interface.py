@@ -52,7 +52,7 @@ class App(tk.Tk):
                       fg="white", activebackground="#174779", padx=12, pady=9, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
         search = tk.Frame(main, bg="#f3f6fa")
         search.pack(fill="x", pady=(2, 10))
-        tk.Label(search, text="Pesquisar nome ou categoria:", bg="#f3f6fa", fg="#24374e").pack(side="left", padx=(0, 10))
+        tk.Label(search, text="Pesquisar nome, categoria, fornecedor ou responsável:", bg="#f3f6fa", fg="#24374e").pack(side="left", padx=(0, 10))
         self.busca = ttk.Entry(search, font=("Segoe UI", 11))
         self.busca.pack(side="left", fill="x", expand=True)
         self.busca.bind("<KeyRelease>", lambda _: self.atualizar_lista())
